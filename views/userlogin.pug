@@ -1,0 +1,75 @@
+extends layout
+
+block content
+  script(type="text/javascript").
+      function processResponse() {
+        if(req.readyState == 4) {
+          if(req.status == 200) {
+            var jsonResponse = JSON.parse(req.responseText);
+            if(jsonResponse && jsonResponse.state != null) {
+                var state = jsonResponse.state;
+                if (state != 'SUCCESS') {
+                  // re-poll after a short wait
+                  setTimeout(startPolling, 1000);
+                } else {
+                  // we must have an answer - get the browser moving again
+                  window.location.href = "/" + jsonResponse.next;
+                }						
+            } else {
+              // Error handling for invalid response
+            }
+           } else {
+              // Error handling for non-200 response
+           }
+         } else {
+              // Error handling for unexpected readyState
+         }
+       }
+
+       function startPolling() {
+        req = new XMLHttpRequest();
+        req.onreadystatechange = processResponse;
+        req.open("GET", "/userlogin/qrcheck", true);
+        req.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+        req.setRequestHeader("Accept", "application/json;charset=UTF-8");
+        req.send();
+       }
+       
+       startPolling()
+       
+  .container.one
+     .header
+        .header-title
+          h2 Please Sign In
+  .container.two(height='500px')
+     .panelqr
+       .panel-header
+          center
+            h3 QR Code Login
+       .panel-body
+          center
+            img(src='data:image/png;base64,'+qrCode alt='qrcode')
+                      
+  form(method='POST' action='/userlogin/pwdcheck')
+      .panellogin
+        .panel-header
+          center
+            h3 Username and Password Login
+        |       
+        .panel-body
+          .login-form
+            .control-box
+              span Login:
+              |             
+              input(type='username' id='username' placeholder='username' name='username')
+               |           
+            .control-box
+              span Password:
+              |             
+              input(type='password' id='password' placeholder='password' name='password')
+        |       
+        .panel-footer
+          center
+            i.fa.fa-sign-in(aria-hidden='true')
+            |           
+            button.btn.btn-primary(type='submit') Login
