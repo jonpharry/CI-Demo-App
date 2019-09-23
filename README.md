@@ -35,6 +35,14 @@ The CLIENT_ID and CLIENT_SECRET must be for an API Client that has these permiss
 
 The VERIFY_REG_ID is the Id of a Registration profile (found under Security-->Registration Profiles)
 
+To use QR Code Login, your user must have a registered IBM Verify application.  This can be done via the Cloud Identity Launchpad.  Registration is not supported in the demonstration application.
+
+Run the application:
+
+`npm start`
+
+Connect to the application at `http://localhost:3000`
+
 # License
 
 The contents of this repository are open-source under the Apache 2.0 licence.
