@@ -93,9 +93,9 @@ router.post('/pwdcheck', function(req, res, _next) {
     // Call CI to check username and password
     // If username and password good, id in response will contain
     // CI user ID for authenticated user.
-    ci.passwordLogin(req.body.username, req.body.password).then((body) => {
+    ci.passwordLogin(req.body.username, req.body.password).then((userJson) => {
       // Attempt to populate session with id from response
-      req.session.userId = body.id;
+      req.session.userId = userJson.id;
 
       // If userId in session not populated (authentication failed)
       if (!(req.session.userId)) {
@@ -108,7 +108,7 @@ router.post('/pwdcheck', function(req, res, _next) {
         // Mark session authenticated
         req.session.authenticated = true
         // Populate user in session
-        req.session.user= body;
+        req.session.user= userJson;
 
         // Clean up (unused) QR Code data from session
         delete req.session.qrtxn;
