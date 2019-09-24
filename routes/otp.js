@@ -18,14 +18,13 @@ router.get('/', function(req, res, _next) {
     // Get CI userId from session
     var userId = req.session.userId;
 
-      // Call CI to get user information
-      ci.getUser(userId).then(userJson => {
+        var userJson = req.session.user;
 
-        // Extract e-mail address from SCIM response
+        // Extract e-mail address from userJson
         var destination = userJson.emails[0].value;
         var method = "email";
 
-        // Extract mobile number for SCIM response
+        // Extract mobile number for userJson
         var mobileNo = userJson.phoneNumbers[0].value;
 
         // If mobile number defined, prefer this for OTP
@@ -66,10 +65,8 @@ router.get('/', function(req, res, _next) {
             });
             console.log(err);
           });
-      });
-
-    console.log("END profile GET Function");
   }
+  console.log("END profile GET Function");
 });
 
 // POST method will receive the OTP that the user has submitted on the
@@ -117,6 +114,12 @@ router.post('/', function(req, res, _next) {
             status: "500"
           });
         }
+      }).catch(e => {
+        res.render('error', {
+          message: "Something went wrong",
+          status: "500"
+        });
+        console.log("Error: " + e.error);
       });
   } else {
     res.render('error', { // No OTP was submitted in POST
