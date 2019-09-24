@@ -15,56 +15,53 @@ router.get('/', function(req, res, _next) {
     res.redirect('/userlogin');
   } else { // User is authenticated
 
-    // Get CI userId from session
-    var userId = req.session.userId;
+    // Get user from session
+    var userJson = req.session.user;
 
-        var userJson = req.session.user;
+    // Extract e-mail address from userJson
+    var destination = userJson.emails[0].value;
+    var method = "email";
 
-        // Extract e-mail address from userJson
-        var destination = userJson.emails[0].value;
-        var method = "email";
+    // Extract mobile number from userJson
+    var mobileNo = userJson.phoneNumbers[0].value;
 
-        // Extract mobile number for userJson
-        var mobileNo = userJson.phoneNumbers[0].value;
+    // If mobile number defined, prefer this for OTP
+    if (mobileNo) {
+      method = "mobile";
+      destination = mobileNo;
+    }
 
-        // If mobile number defined, prefer this for OTP
-        if (mobileNo) {
-          method = "mobile";
-          destination = mobileNo;
-        }
+    // Call CI to initiate OTP.  This will send OTP.
+    // Response contains information required for validation
+    ci.generateOTP(method, destination).then(body => {
 
-        // Call CI to initiate OTP.  This will send OTP.
-        // Response contains information required for validation
-        ci.generateOTP(method, destination).then(body => {
+      // Extract hint from response
+      var hint = body.correlation;
 
-            // Extract hint from response
-            var hint = body.correlation;
-
-            // If no hint, this means the OTP send failed
-            if (!(hint)) {
-              res.render('error', {
-                message: "Something went wrong with OTP generation, please re run the flow",
-                status: "400"
-              });
-            } else { // We got a good response
-              // Store the response in session.  It is needed for validation.
-              req.session.otpInitResponse = body;
-              // Render the OTP challenge page for the user.
-              // POST from this page will activate POST method below
-              res.render('otp', {
-                title: 'Login with the One-Time password',
-                hint: hint,
-                method: method
-              });
-            }
-          },
-          function(err) {
-            res.render('error', {
-              message: "Something went wrong with OTP generation",
-              status: "400"
-            });
-            console.log(err);
-          });
+      // If no hint, this means the OTP send failed
+      if (!(hint)) {
+        res.render('error', {
+          message: "Something went wrong with OTP generation.",
+          status: "400"
+        });
+      } else { // We got a good response
+        // Store the response in session.  It is needed for validation.
+        req.session.otpInitResponse = body;
+        // Render the OTP challenge page for the user.
+        // POST from this page will activate POST method below
+        res.render('otp', {
+          title: 'Login with the One-Time password',
+          hint: hint,
+          method: method
+        });
+      }
+    }).catch(e => {
+      res.render('error', {
+        message: "Something went wrong with OTP generation",
+        status: "400"
+      });
+      console.log(e);
+    });
   }
   console.log("END profile GET Function");
 });
@@ -77,50 +74,50 @@ router.post('/', function(req, res, _next) {
   // If an OTP has been submitted
   if (req.body.otp) {
 
-      // Call CI to validate the submitted OTP value
-      // This Response from initation is supplied.  It contains the
-      // transaction ID needed for validation.
-      ci.validateOTP(req.session.otpInitResponse, req.body.otp).then(body => {
+    // Call CI to validate the submitted OTP value
+    // This Response from initation is supplied.  It contains the
+    // transaction ID needed for validation.
+    ci.validateOTP(req.session.otpInitResponse, req.body.otp).then(body => {
 
-        // If a good response was received
-        if (body.messageDescription) {
-          // If response message contains "successful"
-          if (body.messageDescription.search("successful") != -1) {
-            // OTP complete.  Mark session
-            req.session.otpcomplete = true;
-            // Clean up session data
-            delete req.session.otpInitResponse
-            if (req.session.afterotp) {
-              var url = req.session.afterotp;
-              delete req.session.afterotp;
-              // Redirect to URL stored in session
-              res.redirect('/' + url);
+      // If a good response was received
+      if (body.messageDescription) {
+        // If response message contains "successful"
+        if (body.messageDescription.search("successful") != -1) {
+          // OTP complete.  Mark session
+          req.session.otpcomplete = true;
+          // Clean up session data
+          delete req.session.otpInitResponse
+          if (req.session.afterotp) {
+            var url = req.session.afterotp;
+            delete req.session.afterotp;
+            // Redirect to URL stored in session
+            res.redirect('/' + url);
 
-            } else { // OTP was called directly.  Nowhere to return to.
-              res.render('error', {
-                message: "No return URL available",
-                status: "400"
-              });
-            }
-          } else { // Message doesn't contain "successful".  OTP Fail.
+          } else { // OTP was called directly.  Nowhere to return to.
             res.render('error', {
-              message: "OTP Validation failed",
+              message: "No return URL available",
               status: "400"
             });
           }
-        } else { // Bad response from server
+        } else { // Message doesn't contain "successful".  OTP Fail.
           res.render('error', {
             message: "OTP Validation failed",
-            status: "500"
+            status: "400"
           });
         }
-      }).catch(e => {
+      } else { // Bad response from server
         res.render('error', {
-          message: "Something went wrong",
+          message: "OTP Validation failed",
           status: "500"
         });
-        console.log("Error: " + e.error);
+      }
+    }).catch(e => {
+      res.render('error', {
+        message: "Something went wrong",
+        status: "500"
       });
+      console.log("Error: " + e.error);
+    });
   } else {
     res.render('error', { // No OTP was submitted in POST
       message: "OTP not found failed",
