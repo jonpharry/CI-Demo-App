@@ -127,11 +127,19 @@ router.post('/pwdcheck', function(req, res, _next) {
         }
       }
     }).catch(e => {
-      res.render('error', {
-        message: "Something went wrong",
-        status: "500"
-      });
-      console.log("Error: " + e.error);
+      if (e.response && e.response.data && e.response.data.detail) {
+        res.render('error', {
+          message: e.response.data.detail,
+          status: "500"
+        });
+        console.log(e.response.data.detail);
+      } else {
+        res.render('error', {
+          message: "Something went wrong",
+          status: "500"
+        });
+        console.log(e);
+      }
     });
   } else { // username and/or password missing from POST body
     console.log("Username and password should be provided");

@@ -112,11 +112,19 @@ router.post('/', function(req, res, _next) {
         });
       }
     }).catch(e => {
-      res.render('error', {
-        message: "Something went wrong",
-        status: "500"
-      });
-      console.log("Error: " + e.error);
+      if (e.response && e.response.data && e.response.data.messageDescription) {
+        res.render('error', {
+          message: e.response.data.messageDescription,
+          status: "500"
+        });
+        console.log(e.response.data.messageDescription);
+      } else {
+        res.render('error', {
+          message: "Something went wrong",
+          status: "500"
+        });
+        console.log(e);
+      }
     });
   } else {
     res.render('error', { // No OTP was submitted in POST

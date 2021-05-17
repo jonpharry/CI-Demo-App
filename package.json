@@ -15,10 +15,8 @@
     "express": "~4.16.1",
     "express-session": "^1.17.1",
     "http-errors": "~1.6.3",
-    "ibm-verify-sdk": "^2.0.2",
     "morgan": "~1.9.1",
     "pug": "^3.0.2",
-    "request": "^2.88.2",
-    "request-promise-native": "^1.0.9"
+    "query-string": "^7.0.0"
   }
 }
