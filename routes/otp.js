@@ -81,8 +81,8 @@ router.post('/', function(req, res, _next) {
 
       // If a good response was received
       if (body.messageDescription) {
-        // If response message contains "successful"
-        if (body.messageDescription.search("successful") != -1) {
+        // If response message contains "verified"
+        if (body.messageDescription.search("verified") != -1) {
           // OTP complete.  Mark session
           req.session.otpcomplete = true;
           // Clean up session data

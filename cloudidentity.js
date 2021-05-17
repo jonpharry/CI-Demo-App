@@ -4,7 +4,7 @@
 const dotenv = require('dotenv');
 
 // The OAuth module is used to get an Access Token
-const oauth = require('./oauth.js');
+const clientCreds = require('./oauth-client-creds.js').OAuthClientCreds;
 
 // The request-promise-native module is used to make HTTP requests
 // Response is a promise (vs a callback)
@@ -21,7 +21,15 @@ var qrEndpoint = '/v2.0/factors/qr/authenticate';
 dotenv.config();
 
 // Read CI Tenant URL from properties
+var config  = {
+  tenantUrl: process.env.TENANT_URL,
+  clientId: process.env.CLIENT_ID,
+  clientSecret: process.env.CLIENT_SECRET
+};
+
 var tenant_url = process.env.TENANT_URL;
+
+oauth = new clientCreds(config);
 
 // Function to lookup user information using userID
 // Function returns a Promise which will resolve to the user SCIM data
